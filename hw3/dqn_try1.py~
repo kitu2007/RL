@@ -126,22 +126,13 @@ def learn(env,
     # And then you can obtain the variables like this:
     # q_func_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='q_func')
     # Older versions of TensorFlow may require using "VARIABLES" instead of "GLOBAL_VARIABLES"
-    #########################################################
-
+    ######
     # YOUR CODE HERE
-
     # these are two different networks 
     q_out = q_func(obs_t_float, num_actions, scope='q_func')
-    tq_out = q_func(obs_tp1_float, num_actions, scope='target_q_func', reuse=True)
+    tq_out = q_func(obs_t_float, num_actions, scope='target_q_func', reuse=True)
+    ######
 
-    # produce total_error
-    yj = rew_t_ph + (1-done_mask_ph) * gamma * tf.reduce_max(tq_out)
-    total_error = tf.nn.l2_loss(q_out[act_t_ph] - yj)
-
-    q_func_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='q_func')
-    target_q_func_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='target_q_func')
-    #########################################################
-    
     # construct optimization op (with gradient clipping)
     learning_rate = tf.placeholder(tf.float32, (), name="learning_rate")
     optimizer = optimizer_spec.constructor(learning_rate=learning_rate, **optimizer_spec.kwargs)
@@ -170,7 +161,6 @@ def learn(env,
 
     epsilon = 0.001
     for t in itertools.count():
-        
         ### 1. Check stopping criterion
         if stopping_criterion is not None and stopping_criterion(env, t):
             break
@@ -205,7 +195,7 @@ def learn(env,
         # may not yet have been initialized (but of course, the first step
         # might as well be random, since you haven't trained your net...)
 
-        #########################################################################
+        #####
         # YOUR CODE HERE
 
         # take an action
@@ -213,19 +203,21 @@ def learn(env,
             # take a random action
             action  = np.random.randint(0, num_actions)
         else:
-            action = np.argmax(q_out)
+            action = np.argmax(Q_output)
 
-        # step with that action and record it 
+        # step with that reward
         obs, reward, done, info = env.step(action)
+        ipdb.set_trace()
+        replay_buffer.store_frame(obs)
+        
+        replay_buffer.store_effect(idx, action, reward, done)
         if done:
             obs = env.reset()
-
-        replay_buffer.store_frame(obs)        
-        replay_buffer.store_effect(t, action, reward, done)
-
-        last_obs = obs
+        else:
+            pass
+            
         
-        #########################################################################
+        #####
 
         # at this point, the environment should have been advanced one step (and
         # reset if done was true), and last_obs should point to the new latest
@@ -271,29 +263,11 @@ def learn(env,
             # session.run(update_target_fn)
             # you should update every target_update_freq steps, and you may find the
             # variable num_param_updates useful for this (it was initialized to 0)
-            ############################################
+            #####
             
             # YOUR CODE HERE
-            obs_batch, act_batch, rew_batch, next_obs_batch, done_mask = replay_buffer.sample(batch_size)
-
-            if not model_initialized:
-                initialize_interdependent_variables(session, tf.global_variables(), {
-                    obs_t_ph: obs_batch,
-                    obs_tp1_ph: next_obs_batch
-                    })
-                model_initialized = True
-            
-            session.run(train_fn, feed_dict = {
-                obs_t_ph: obs_batch,
-                act_t_ph: act_batch,
-                rew_t_ph: rew_batch,
-                obs_tp1_ph: next_obs_batch,
-                done_mask_ph: done_mask,
-                learning_rate:optimizer_spec.lr_schedule.value(t)
-                })
-            if t % target_update_freq == 0:
-                session.run(update_target_fn)
-            #################################################
+            pass
+            #####
 
         ### 4. Log progress
         episode_rewards = get_wrapper_by_name(env, "Monitor").get_episode_rewards()

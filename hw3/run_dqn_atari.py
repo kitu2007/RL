@@ -6,7 +6,7 @@ import random
 import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.layers as layers
-
+import ipdb 
 import dqn
 from dqn_utils import *
 from atari_wrappers import *
@@ -127,6 +127,7 @@ def main():
     seed = 0 # Use a seed of zero (you may want to randomize the seed!)
     env = get_env(task, seed)
     session = get_session()
+    #ipdb.set_trace()
     atari_learn(env, session, num_timesteps=task.max_timesteps)
 
 if __name__ == "__main__":
