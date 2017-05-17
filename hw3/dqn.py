@@ -7,7 +7,7 @@ import tensorflow                as tf
 import tensorflow.contrib.layers as layers
 from collections import namedtuple
 from dqn_utils import *
-import ipdb
+#import ipdb
 
 OptimizerSpec = namedtuple("OptimizerSpec", ["constructor", "kwargs", "lr_schedule"])
 
@@ -132,11 +132,11 @@ def learn(env,
 
     # these are two different networks 
     q_out = q_func(obs_t_float, num_actions, scope='q_func')
-    tq_out = q_func(obs_tp1_float, num_actions, scope='target_q_func', reuse=True)
+    tq_out = q_func(obs_tp1_float, num_actions, scope='target_q_func')
 
     # produce total_error
     yj = rew_t_ph + (1-done_mask_ph) * gamma * tf.reduce_max(tq_out)
-    total_error = tf.nn.l2_loss(q_out[act_t_ph] - yj)
+    total_error = tf.nn.l2_loss(q_out[:,act_t_ph[0]] - yj)
 
     q_func_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='q_func')
     target_q_func_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='target_q_func')
@@ -168,7 +168,6 @@ def learn(env,
     last_obs = env.reset()
     LOG_EVERY_N_STEPS = 10000
 
-    epsilon = 0.001
     for t in itertools.count():
         
         ### 1. Check stopping criterion
@@ -209,7 +208,7 @@ def learn(env,
         # YOUR CODE HERE
 
         # take an action
-        if np.random.random_sample() < epsilon:
+        if np.random.random_sample() < exploration.value(t):
             # take a random action
             action  = np.random.randint(0, num_actions)
         else:

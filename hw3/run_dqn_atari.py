@@ -6,7 +6,7 @@ import random
 import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.layers as layers
-import ipdb 
+
 import dqn
 from dqn_utils import *
 from atari_wrappers import *
